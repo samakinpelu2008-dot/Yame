@@ -2,238 +2,186 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>De Quizz 🌈</title>
+<title>5v5 Circle Battle Game</title>
 <style>
-body { font-family:'Segoe UI',sans-serif; background:#f8f9fb; margin:0; padding:0;}
-h1,h2,h3{text-align:center;}
-.container{max-width:1000px;margin:auto;padding:20px;}
-.card{background:white;border-radius:18px;padding:20px;margin:15px;box-shadow:0 15px 40px rgba(0,0,0,0.08);transition:all 0.3s ease;cursor:pointer;}
-.card:hover{transform:translateY(-6px) scale(1.02);}
-.rainbow-btn{background:linear-gradient(135deg,#ff4d4d,#ff9f1a,#feca57,#1dd1a1,#54a0ff,#5f27cd);color:white;border:none;padding:10px 20px;border-radius:12px;cursor:pointer;font-weight:bold;transition:all 0.3s ease;margin:5px 0;}
-.rainbow-btn:hover{transform:scale(1.05);}
-.hidden{display:none;}
-.quiz-card{animation:slideIn 0.5s ease;margin:15px;padding:15px;background:#fff;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.08);}
-@keyframes slideIn{from{opacity:0;transform:translateX(30px);}to{opacity:1;transform:translateX(0);}}
-input, select{width:80%;padding:10px;font-size:16px;margin:5px 0;}
+  body { margin:0; background:#222; display:flex; justify-content:center; align-items:center; height:100vh; color:white; font-family:sans-serif; flex-direction:column; }
+  canvas { background:#333; border:2px solid #fff; }
+  #scoreboard { margin-bottom:10px; font-size:20px; }
 </style>
 </head>
 <body>
-<div class="container">
-<h1>De Quizz 🌈</h1>
+<div id="scoreboard">Red: 0 | Blue: 0</div>
+<canvas id="gameCanvas" width="800" height="500"></canvas>
 
-<!-- LOGIN -->
-<div id="login-section">
-  <h2>Login / Signup</h2>
-  <input type="email" id="email-input" placeholder="Enter your email"><br>
-  <button class="rainbow-btn" id="send-link-btn">Send Magic Link</button>
-  <p id="login-msg"></p>
-</div>
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-<!-- USER PROFILE -->
-<div id="username-section" class="hidden">
-  <h2>Complete Profile</h2>
-  <input type="text" id="username-input" placeholder="Choose Username"><br>
-  <select id="class-select">
-    <option value="">Select Class</option>
-    <option>GS1</option><option>GS2</option><option>GS3</option>
-    <option>SS1</option><option>SS2</option><option>SS3</option>
-  </select><br>
-  <select id="category-select">
-    <option value="">Select Category</option>
-    <option>Science</option><option>Art</option><option>Commercial</option>
-  </select><br>
-  <button class="rainbow-btn" id="save-profile-btn">Save Profile</button>
-</div>
+const radius = 20;
+const speed = 5;
+let turn = 'player';
+let moveInProgress = false;
+let redScore = 0;
+let blueScore = 0;
+const winScore = 5;
 
-<!-- DASHBOARD -->
-<div id="dashboard-section" class="hidden">
-  <h2>Dashboard</h2>
-  <p id="welcome-msg"></p>
-  <button class="rainbow-btn" onclick="logout()">Logout</button>
-  <button class="rainbow-btn" onclick="shareApp()">Share App</button>
-  <div id="admin-panel" class="hidden">
-    <button class="rainbow-btn" onclick="refreshQuestions()">Update Questions</button>
-  </div>
+// ====== CREATE TEAMS ======
+let players = [];
+let aiTeam = [];
 
-  <h3>Classes</h3>
-  <div id="classes-container" style="display:flex;flex-wrap:wrap;"></div>
-  <h3>Subjects</h3>
-  <div id="subjects-container" style="display:flex;flex-wrap:wrap;"></div>
-</div>
-
-<!-- QUIZ ROOM -->
-<div id="quiz-section" class="hidden">
-  <h2>Quiz: <span id="quiz-topic"></span></h2>
-  <div id="quiz-questions"></div>
-  <button class="rainbow-btn" onclick="backToDashboard()">Back to Dashboard</button>
-</div>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-import { getAuth, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDyvQ6dEJ5ePgfOSWT4cKkUsQJiJBDarUA",
-  authDomain: "de-quizz.firebaseapp.com",
-  projectId: "de-quizz",
-  storageBucket: "de-quizz.firebasestorage.app",
-  messagingSenderId: "655485330786",
-  appId: "1:655485330786:web:95e01bf8dd5fd88cb0f83b"
-};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-const loginSection=document.getElementById('login-section');
-const usernameSection=document.getElementById('username-section');
-const dashboardSection=document.getElementById('dashboard-section');
-const quizSection=document.getElementById('quiz-section');
-
-const emailInput=document.getElementById('email-input');
-const sendLinkBtn=document.getElementById('send-link-btn');
-const loginMsg=document.getElementById('login-msg');
-
-const usernameInput=document.getElementById('username-input');
-const classSelect=document.getElementById('class-select');
-const categorySelect=document.getElementById('category-select');
-const saveProfileBtn=document.getElementById('save-profile-btn');
-
-const welcomeMsg=document.getElementById('welcome-msg');
-const classesContainer=document.getElementById('classes-container');
-const subjectsContainer=document.getElementById('subjects-container');
-const adminPanel=document.getElementById('admin-panel');
-
-const quizTopic=document.getElementById('quiz-topic');
-const quizQuestions=document.getElementById('quiz-questions');
-
-const actionCodeSettings={url:window.location.href, handleCodeInApp:true};
-
-// Send magic link
-sendLinkBtn.addEventListener('click', async ()=>{
-  const email=emailInput.value;
-  if(!email)return alert("Enter email");
-  try{
-    await sendSignInLinkToEmail(auth,email,actionCodeSettings);
-    window.localStorage.setItem('emailForSignIn',email);
-    loginMsg.textContent="Check your email for the login link!";
-  }catch(e){console.error(e);alert("Error sending link");}
-});
-
-// Handle magic link login
-if(isSignInWithEmailLink(auth, window.location.href)){
-  let email=window.localStorage.getItem('emailForSignIn') || prompt("Enter your email for confirmation");
-  signInWithEmailLink(auth,email,window.location.href).then(async result=>{
-    window.localStorage.removeItem('emailForSignIn');
-    checkUsername(result.user);
-  }).catch(console.error);
+for(let i=0;i<5;i++){
+  players.push({x:50+i*50, y:450, targetX:50+i*50, targetY:450, alive:true});
+  aiTeam.push({x:50+i*50, y:50, targetX:50+i*50, targetY:50, alive:true});
 }
 
-// Check username/profile
-async function checkUsername(user){
-  const userRef=doc(db,'users',user.uid);
-  const snap=await getDoc(userRef);
-  if(!snap.exists() || !snap.data().username){
-    loginSection.classList.add('hidden');
-    usernameSection.classList.remove('hidden');
-  }else showDashboard(user);
-}
+// ====== DRAW ======
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-// Save profile
-saveProfileBtn.addEventListener('click',async ()=>{
-  const username=usernameInput.value;
-  const classLevel=classSelect.value;
-  const category=categorySelect.value;
-  if(!username||!classLevel||!category) return alert("Fill all fields");
-  const user=auth.currentUser;
-  await setDoc(doc(db,'users',user.uid),{username,classLevel,category,role:'admin',subscription:{status:'inactive'}});
-  usernameSection.classList.add('hidden');
-  showDashboard(user);
-});
+  for(let p of players){
+    if(!p.alive) continue;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,radius,0,Math.PI*2);
+    ctx.fillStyle='red';
+    ctx.fill();
+    ctx.strokeStyle='#fff';
+    ctx.stroke();
+  }
 
-// Show dashboard
-async function showDashboard(user){
-  loginSection.classList.add('hidden');
-  usernameSection.classList.add('hidden');
-  dashboardSection.classList.remove('hidden');
-  welcomeMsg.textContent=`Welcome, ${user.email}`;
-
-  const userSnap=await getDoc(doc(db,'users',user.uid));
-  if(userSnap.data().role==='admin') adminPanel.classList.remove('hidden');
-
-  const classes=['GS1','GS2','GS3','SS1','SS2','SS3'];
-  classesContainer.innerHTML='';
-  classes.forEach(c=>{
-    const div=document.createElement('div');
-    div.className='card'; div.textContent=c;
-    div.onclick=()=>alert(`Clicked ${c}`);
-    classesContainer.appendChild(div);
-  });
-
-  const subjects=['Mathematics','English','Physics','Chemistry','Biology','Literature','CRS','Government','Accounting','Economics'];
-  subjectsContainer.innerHTML='';
-  subjects.forEach(s=>{
-    const div=document.createElement('div');
-    div.className='card'; div.textContent=s;
-    div.onclick=()=>openQuiz(s);
-    subjectsContainer.appendChild(div);
-  });
-}
-
-// Logout
-function logout(){ auth.signOut(); dashboardSection.classList.add('hidden'); loginSection.classList.remove('hidden'); }
-
-// Share
-function shareApp(){
-  if(navigator.share){
-    navigator.share({title:"De Quizz 🌈",text:"Practice GS & SS questions!",url:window.location.href});
-  }else{
-    navigator.clipboard.writeText(window.location.href);
-    alert("Link copied! Share with friends.");
+  for(let a of aiTeam){
+    if(!a.alive) continue;
+    ctx.beginPath();
+    ctx.arc(a.x,a.y,radius,0,Math.PI*2);
+    ctx.fillStyle='blue';
+    ctx.fill();
+    ctx.strokeStyle='#fff';
+    ctx.stroke();
   }
 }
 
-// Quiz room
-async function openQuiz(subject){
-  dashboardSection.classList.add('hidden');
-  quizSection.classList.remove('hidden');
-  quizTopic.textContent=subject;
-  quizQuestions.innerHTML='';
+// ====== MOVE ANIMATION ======
+function animateMovement(){
+  let moving = false;
 
-  const user=auth.currentUser;
-  const userSnap=await getDoc(doc(db,'users',user.uid));
-  const isFree=!userSnap.data().subscription?.status || userSnap.data().subscription.status!=='active';
+  function moveUnit(u){
+    if(!u.alive) return;
+    let dx = u.targetX - u.x;
+    let dy = u.targetY - u.y;
+    if(Math.abs(dx)>0.5){ u.x += dx*0.2; moving = true; }
+    if(Math.abs(dy)>0.5){ u.y += dy*0.2; moving = true; }
+  }
 
-  const qCol=collection(db,'questions');
-  const qSnap=await getDocs(qCol);
-  let questions=[];
-  qSnap.forEach(q=>{if(q.data().subject===subject)questions.push(q.data());});
-  if(isFree) questions=questions.slice(0,5);
+  players.forEach(moveUnit);
+  aiTeam.forEach(moveUnit);
 
-  questions.forEach((q,i)=>{
-    const div=document.createElement('div');
-    div.className='quiz-card';
-    div.innerHTML=`<strong>Q${i+1}:</strong> ${q.question}<br>`+q.options.map(o=>`<button class="rainbow-btn">${o}</button>`).join(' ');
-    quizQuestions.appendChild(div);
-  });
+  if(!moving && moveInProgress){
+    moveInProgress = false;
+    checkAttack();
+    if(turn==='player') turn='ai';
+    else turn='player';
 
-  if(isFree){
-    const info=document.createElement('p'); info.textContent="Free mode: limited questions only";
-    quizQuestions.prepend(info);
+    if(turn==='ai') aiMove();
   }
 }
 
-function backToDashboard(){
-  quizSection.classList.add('hidden');
-  dashboardSection.classList.remove('hidden');
+// ====== CHECK ATTACKS ======
+function checkAttack(){
+  for(let p of players){
+    if(!p.alive) continue;
+    for(let a of aiTeam){
+      if(!a.alive) continue;
+      let dist = Math.hypot(p.x-a.x, p.y-a.y);
+      if(dist <= radius*2){
+        // attack
+        a.alive=false;
+        redScore++;
+        updateScore();
+      }
+    }
+  }
+
+  for(let a of aiTeam){
+    if(!a.alive) continue;
+    for(let p of players){
+      if(!p.alive) continue;
+      let dist = Math.hypot(a.x-p.x, a.y-p.y);
+      if(dist <= radius*2){
+        p.alive=false;
+        blueScore++;
+        updateScore();
+      }
+    }
+  }
+
+  // Check win
+  if(redScore>=winScore || blueScore>=winScore){
+    alert((redScore>=winScore?'Red':'Blue') + ' wins!');
+    resetGame();
+  }
 }
 
-// Admin refresh questions
-async function refreshQuestions(){
-  alert("This simulates fetching updated questions from Firestore. Admin can later connect AI function here.");
-  // Optional: add logic to pull or reorder questions from Firestore
+// ====== UPDATE SCOREBOARD ======
+function updateScore(){
+  document.getElementById('scoreboard').innerText = `Red: ${redScore} | Blue: ${blueScore}`;
 }
+
+// ====== PLAYER CLICK ======
+canvas.addEventListener('click', (e)=>{
+  if(turn!=='player' || moveInProgress) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const clickX = e.clientX - rect.left;
+  const clickY = e.clientY - rect.top;
+
+  // nearest alive player
+  let alivePlayers = players.filter(p=>p.alive);
+  if(alivePlayers.length===0) return;
+
+  let nearest = alivePlayers[0];
+  let minDist = Math.hypot(nearest.x-clickX, nearest.y-clickY);
+  for(let p of alivePlayers){
+    let d = Math.hypot(p.x-clickX, p.y-clickY);
+    if(d<minDist){ nearest=p; minDist=d; }
+  }
+
+  nearest.targetX = clickX;
+  nearest.targetY = clickY;
+  moveInProgress = true;
+});
+
+// ====== AI MOVE ======
+function aiMove(){
+  moveInProgress=true;
+  // AI: each alive circle moves towards nearest player with random offset
+  for(let a of aiTeam.filter(a=>a.alive)){
+    let alivePlayers = players.filter(p=>p.alive);
+    if(alivePlayers.length===0) break;
+    let target = alivePlayers[Math.floor(Math.random()*alivePlayers.length)];
+    let offsetX = (Math.random()*40)-20;
+    let offsetY = (Math.random()*40)-20;
+    a.targetX = target.x+offsetX;
+    a.targetY = target.y+offsetY;
+  }
+}
+
+// ====== RESET GAME ======
+function resetGame(){
+  redScore=0;
+  blueScore=0;
+  updateScore();
+  turn='player';
+  players.forEach((p,i)=>{p.x=50+i*50; p.y=450; p.targetX=p.x; p.targetY=p.y; p.alive=true;});
+  aiTeam.forEach((a,i)=>{a.x=50+i*50; a.y=50; a.targetX=a.x; a.targetY=a.y; a.alive=true;});
+}
+
+// ====== GAME LOOP ======
+function gameLoop(){
+  draw();
+  animateMovement();
+  requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
 </script>
 </body>
 </html>
