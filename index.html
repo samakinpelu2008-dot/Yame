@@ -2,186 +2,78 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>5v5 Circle Battle Game</title>
+<title>Simple Crossword Puzzle</title>
 <style>
-  body { margin:0; background:#222; display:flex; justify-content:center; align-items:center; height:100vh; color:white; font-family:sans-serif; flex-direction:column; }
-  canvas { background:#333; border:2px solid #fff; }
-  #scoreboard { margin-bottom:10px; font-size:20px; }
+  body { font-family: sans-serif; background:#f0f0f0; display:flex; flex-direction:column; align-items:center; padding:20px; }
+  table { border-collapse: collapse; }
+  td { border: 1px solid #000; width: 30px; height: 30px; text-align: center; vertical-align: middle; }
+  input { width: 28px; height: 28px; text-transform: uppercase; text-align:center; border:none; font-weight:bold; font-size:16px; }
+  input:disabled { background: #333; }
+  #checkBtn { margin-top: 15px; padding:8px 15px; font-size:16px; }
 </style>
 </head>
 <body>
-<div id="scoreboard">Red: 0 | Blue: 0</div>
-<canvas id="gameCanvas" width="800" height="500"></canvas>
+
+<h2>Simple Crossword Puzzle</h2>
+<table id="crossword"></table>
+<button id="checkBtn">Check Answers</button>
 
 <script>
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+// ===== CROSSWORD GRID SETUP =====
+// '.' = empty cell / black
+// letters = solution
+const crosswordData = [
+  ['C','A','T','.','D','O','G'],
+  ['.','.','A','.','.','.','O'],
+  ['F','I','S','H','.','.','G'],
+  ['.','.','R','.','.','.','.'],
+  ['.','.','E','.','.','.','.']
+];
 
-const radius = 20;
-const speed = 5;
-let turn = 'player';
-let moveInProgress = false;
-let redScore = 0;
-let blueScore = 0;
-const winScore = 5;
+const table = document.getElementById('crossword');
+const inputCells = [];
 
-// ====== CREATE TEAMS ======
-let players = [];
-let aiTeam = [];
-
-for(let i=0;i<5;i++){
-  players.push({x:50+i*50, y:450, targetX:50+i*50, targetY:450, alive:true});
-  aiTeam.push({x:50+i*50, y:50, targetX:50+i*50, targetY:50, alive:true});
+for(let i=0;i<crosswordData.length;i++){
+  const row = document.createElement('tr');
+  inputCells[i] = [];
+  for(let j=0;j<crosswordData[i].length;j++){
+    const td = document.createElement('td');
+    if(crosswordData[i][j]==='.'){
+      td.style.background='#333';
+      const input = document.createElement('input');
+      input.disabled = true;
+      td.appendChild(input);
+    } else {
+      const input = document.createElement('input');
+      input.maxLength = 1;
+      inputCells[i][j] = input;
+      td.appendChild(input);
+    }
+    row.appendChild(td);
+  }
+  table.appendChild(row);
 }
 
-// ====== DRAW ======
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  for(let p of players){
-    if(!p.alive) continue;
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,radius,0,Math.PI*2);
-    ctx.fillStyle='red';
-    ctx.fill();
-    ctx.strokeStyle='#fff';
-    ctx.stroke();
-  }
-
-  for(let a of aiTeam){
-    if(!a.alive) continue;
-    ctx.beginPath();
-    ctx.arc(a.x,a.y,radius,0,Math.PI*2);
-    ctx.fillStyle='blue';
-    ctx.fill();
-    ctx.strokeStyle='#fff';
-    ctx.stroke();
-  }
-}
-
-// ====== MOVE ANIMATION ======
-function animateMovement(){
-  let moving = false;
-
-  function moveUnit(u){
-    if(!u.alive) return;
-    let dx = u.targetX - u.x;
-    let dy = u.targetY - u.y;
-    if(Math.abs(dx)>0.5){ u.x += dx*0.2; moving = true; }
-    if(Math.abs(dy)>0.5){ u.y += dy*0.2; moving = true; }
-  }
-
-  players.forEach(moveUnit);
-  aiTeam.forEach(moveUnit);
-
-  if(!moving && moveInProgress){
-    moveInProgress = false;
-    checkAttack();
-    if(turn==='player') turn='ai';
-    else turn='player';
-
-    if(turn==='ai') aiMove();
-  }
-}
-
-// ====== CHECK ATTACKS ======
-function checkAttack(){
-  for(let p of players){
-    if(!p.alive) continue;
-    for(let a of aiTeam){
-      if(!a.alive) continue;
-      let dist = Math.hypot(p.x-a.x, p.y-a.y);
-      if(dist <= radius*2){
-        // attack
-        a.alive=false;
-        redScore++;
-        updateScore();
+// ====== CHECK ANSWERS ======
+document.getElementById('checkBtn').addEventListener('click',()=>{
+  let correct = 0;
+  let total = 0;
+  for(let i=0;i<crosswordData.length;i++){
+    for(let j=0;j<crosswordData[i].length;j++){
+      if(crosswordData[i][j]!=='.'){
+        total++;
+        if(inputCells[i][j].value.toUpperCase() === crosswordData[i][j]){
+          inputCells[i][j].style.background='lightgreen';
+          correct++;
+        } else {
+          inputCells[i][j].style.background='pink';
+        }
       }
     }
   }
-
-  for(let a of aiTeam){
-    if(!a.alive) continue;
-    for(let p of players){
-      if(!p.alive) continue;
-      let dist = Math.hypot(a.x-p.x, a.y-p.y);
-      if(dist <= radius*2){
-        p.alive=false;
-        blueScore++;
-        updateScore();
-      }
-    }
-  }
-
-  // Check win
-  if(redScore>=winScore || blueScore>=winScore){
-    alert((redScore>=winScore?'Red':'Blue') + ' wins!');
-    resetGame();
-  }
-}
-
-// ====== UPDATE SCOREBOARD ======
-function updateScore(){
-  document.getElementById('scoreboard').innerText = `Red: ${redScore} | Blue: ${blueScore}`;
-}
-
-// ====== PLAYER CLICK ======
-canvas.addEventListener('click', (e)=>{
-  if(turn!=='player' || moveInProgress) return;
-
-  const rect = canvas.getBoundingClientRect();
-  const clickX = e.clientX - rect.left;
-  const clickY = e.clientY - rect.top;
-
-  // nearest alive player
-  let alivePlayers = players.filter(p=>p.alive);
-  if(alivePlayers.length===0) return;
-
-  let nearest = alivePlayers[0];
-  let minDist = Math.hypot(nearest.x-clickX, nearest.y-clickY);
-  for(let p of alivePlayers){
-    let d = Math.hypot(p.x-clickX, p.y-clickY);
-    if(d<minDist){ nearest=p; minDist=d; }
-  }
-
-  nearest.targetX = clickX;
-  nearest.targetY = clickY;
-  moveInProgress = true;
+  alert(`You got ${correct} out of ${total} correct!`);
 });
-
-// ====== AI MOVE ======
-function aiMove(){
-  moveInProgress=true;
-  // AI: each alive circle moves towards nearest player with random offset
-  for(let a of aiTeam.filter(a=>a.alive)){
-    let alivePlayers = players.filter(p=>p.alive);
-    if(alivePlayers.length===0) break;
-    let target = alivePlayers[Math.floor(Math.random()*alivePlayers.length)];
-    let offsetX = (Math.random()*40)-20;
-    let offsetY = (Math.random()*40)-20;
-    a.targetX = target.x+offsetX;
-    a.targetY = target.y+offsetY;
-  }
-}
-
-// ====== RESET GAME ======
-function resetGame(){
-  redScore=0;
-  blueScore=0;
-  updateScore();
-  turn='player';
-  players.forEach((p,i)=>{p.x=50+i*50; p.y=450; p.targetX=p.x; p.targetY=p.y; p.alive=true;});
-  aiTeam.forEach((a,i)=>{a.x=50+i*50; a.y=50; a.targetX=a.x; a.targetY=a.y; a.alive=true;});
-}
-
-// ====== GAME LOOP ======
-function gameLoop(){
-  draw();
-  animateMovement();
-  requestAnimationFrame(gameLoop);
-}
-
-gameLoop();
 </script>
+
 </body>
 </html>
