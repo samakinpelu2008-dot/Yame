@@ -4,108 +4,61 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Banner Ads Demo with Admin</title>
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f4f6fa;
-      color: #222;
-    }
-    header {
-      background: linear-gradient(90deg, #0d6efd, #dc3545);
-      color: white;
-      padding: 20px;
-      text-align: center;
-    }
-    header h1 {
-      margin: 0;
-      font-size: 24px;
-    }
-    .container {
-      max-width: 1100px;
-      margin: 20px auto;
-      padding: 0 15px;
-    }
-    .banner {
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-      margin-bottom: 20px;
-      padding: 10px;
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      overflow: hidden;
-    }
-    .banner.medium {
-      height: 120px;
-    }
-    .ad-media {
-      flex-shrink: 0;
-      width: 160px;
-      height: 100%;
-      overflow: hidden;
-      border-radius: 10px;
-    }
-    .ad-media img, .ad-media video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .ad-text {
-      flex: 1;
-    }
-    .ad-text h2 {
-      margin: 0 0 5px;
-      font-size: 18px;
-      color: #0d6efd;
-    }
-    .ad-text p {
-      margin: 0;
-      font-size: 14px;
-      color: #555;
-    }
-    .ad-btn {
-      background: #dc3545;
-      color: white;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 20px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-    footer {
-      text-align: center;
-      padding: 15px;
-      font-size: 13px;
-      color: #666;
-    }
+    body {margin:0;font-family:Arial,sans-serif;background:#f4f6fa;color:#222;}
+    header {background:linear-gradient(90deg,#0d6efd,#dc3545);color:white;padding:20px;text-align:center;}
+    header h1 {margin:0;font-size:24px;}
+    .container {max-width:1100px;margin:20px auto;padding:0 15px;}
+    .banner {background:white;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.08);margin-bottom:20px;padding:10px;display:flex;align-items:center;gap:15px;overflow:hidden;}
+    .banner.medium {height:120px;}
+    .ad-media {flex-shrink:0;width:160px;height:100%;overflow:hidden;border-radius:10px;}
+    .ad-media img,.ad-media video {width:100%;height:100%;object-fit:cover;}
+    .ad-text {flex:1;}
+    .ad-text h2 {margin:0 0 5px;font-size:18px;color:#0d6efd;}
+    .ad-text p {margin:0;font-size:14px;color:#555;}
+    .ad-btn {background:#dc3545;color:white;border:none;padding:10px 18px;border-radius:20px;font-size:14px;cursor:pointer;}
+    footer {text-align:center;padding:15px;font-size:13px;color:#666;}
   </style>
 </head>
 <body><header>
   <h1>Banner Ads Demo</h1>
-  <p>Test admin panel included</p>
-</header><div class="container">  <!-- ADMIN PANEL (TEST) -->  <div style="background:#fff;padding:15px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.08);margin-bottom:25px;">
+  <p>Admin panel with ImgBB auto-convert</p>
+</header><div class="container">
+  <!-- ADMIN PANEL -->
+  <div style="background:#fff;padding:15px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.08);margin-bottom:25px;">
     <h2 style="margin-top:0;color:#0d6efd;">Admin Panel</h2>
-    <p style="font-size:13px;color:#666;">Paste image/video URL and redirect link</p><select id="adType" style="width:100%;padding:10px;margin-bottom:10px;">
+    <p style="font-size:13px;color:#666;">Paste ImgBB share link or direct URL + redirect link</p><select id="adType" style="width:100%;padding:10px;margin-bottom:10px;">
   <option value="image">Image Ad</option>
   <option value="video">Video Ad</option>
 </select>
-<input id="mediaLink" type="text" placeholder="Image or Video URL" style="width:100%;padding:10px;margin-bottom:10px;" />
+<input id="mediaLink" type="text" placeholder="ImgBB share link or direct URL" style="width:100%;padding:10px;margin-bottom:10px;" />
 <input id="redirectLink" type="text" placeholder="Redirect URL" style="width:100%;padding:10px;margin-bottom:10px;" />
 <button onclick="addAd()" class="ad-btn" style="width:100%;">Add Ad</button>
 
-  </div></div><footer>
-  © 2026 • Banner Ads Demo
-</footer><script>
-function addAd() {
-  const type = document.getElementById('adType').value;
-  const media = document.getElementById('mediaLink').value;
-  const link = document.getElementById('redirectLink').value;
+  </div>
+</div><footer>© 2026 • Banner Ads Demo</footer><script>
+function convertImgBB(link) {
+  // If it's already a direct link, return as is
+  if (link.includes('i.ibb.co')) return link;
 
-  if (!media || !link) {
-    alert('Please fill all fields');
-    return;
+  // Extract the image ID from share link
+  const match = link.match(/ibb.co\/([a-zA-Z0-9]+)/);
+  if (match) {
+    const id = match[1];
+    // Construct direct link (common pattern)
+    return `https://i.ibb.co/${id}/image.png`;
   }
+  return link; // fallback
+}
+
+function addAd() {
+  let type = document.getElementById('adType').value;
+  let media = document.getElementById('mediaLink').value.trim();
+  let link = document.getElementById('redirectLink').value.trim();
+
+  if (!media || !link) { alert('Please fill all fields'); return; }
+
+  // Auto-convert ImgBB share link to direct image link
+  if (type === 'image') media = convertImgBB(media);
 
   const container = document.querySelector('.container');
   const ad = document.createElement('a');
@@ -116,7 +69,7 @@ function addAd() {
 
   let mediaElement = '';
   if (type === 'image') {
-    mediaElement = `<div class='ad-media'><img src='${media}' alt='Ad Image'/></div>`;
+    mediaElement = `<div class='ad-media'><img src='${media}' alt='Ad Image' onerror="this.src='https://via.placeholder.com/160x120.png'"/></div>`;
   } else {
     mediaElement = `<div class='ad-media'><video src='${media}' autoplay muted loop playsinline></video></div>`;
   }
@@ -133,7 +86,6 @@ function addAd() {
   `;
 
   container.appendChild(ad);
-
   document.getElementById('mediaLink').value = '';
   document.getElementById('redirectLink').value = '';
 }
