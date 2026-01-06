@@ -1,79 +1,131 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Simple Crossword Puzzle</title>
-<style>
-  body { font-family: sans-serif; background:#f0f0f0; display:flex; flex-direction:column; align-items:center; padding:20px; }
-  table { border-collapse: collapse; }
-  td { border: 1px solid #000; width: 30px; height: 30px; text-align: center; vertical-align: middle; }
-  input { width: 28px; height: 28px; text-transform: uppercase; text-align:center; border:none; font-weight:bold; font-size:16px; }
-  input:disabled { background: #333; }
-  #checkBtn { margin-top: 15px; padding:8px 15px; font-size:16px; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Banner Ads Demo with Admin</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6fa;
+      color: #222;
+    }
+    header {
+      background: linear-gradient(90deg, #0d6efd, #dc3545);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
+    .banner {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .banner.medium {
+      height: 90px;
+    }
+    .banner.small {
+      height: 60px;
+    }
+    .ad-text {
+      flex: 1;
+    }
+    .ad-text h2 {
+      margin: 0 0 5px;
+      font-size: 18px;
+      color: #0d6efd;
+    }
+    .ad-text p {
+      margin: 0;
+      font-size: 14px;
+      color: #555;
+    }
+    .ad-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    footer {
+      text-align: center;
+      padding: 15px;
+      font-size: 13px;
+      color: #666;
+    }
+  </style>
 </head>
-<body>
+<body><header>
+  <h1>Banner Ads Demo</h1>
+  <p>Test admin panel included</p>
+</header><div class="container">  <!-- ADMIN PANEL (TEST) -->  <div style="background:#fff;padding:15px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.08);margin-bottom:25px;">
+    <h2 style="margin-top:0;color:#0d6efd;">Admin Panel</h2>
+    <p style="font-size:13px;color:#666;">Paste image/video URL and redirect link</p><select id="adType" style="width:100%;padding:10px;margin-bottom:10px;">
+  <option value="image">Image Ad</option>
+  <option value="video">Video Ad</option>
+</select>
+<input id="mediaLink" type="text" placeholder="Image or Video URL" style="width:100%;padding:10px;margin-bottom:10px;" />
+<input id="redirectLink" type="text" placeholder="Redirect URL" style="width:100%;padding:10px;margin-bottom:10px;" />
+<button onclick="addAd()" class="ad-btn" style="width:100%;">Add Ad</button>
 
-<h2>Simple Crossword Puzzle</h2>
-<table id="crossword"></table>
-<button id="checkBtn">Check Answers</button>
+  </div></div><footer>
+  © 2026 • Banner Ads Demo
+</footer><script>
+function addAd() {
+  const type = document.getElementById('adType').value;
+  const media = document.getElementById('mediaLink').value;
+  const link = document.getElementById('redirectLink').value;
 
-<script>
-// ===== CROSSWORD GRID SETUP =====
-// '.' = empty cell / black
-// letters = solution
-const crosswordData = [
-  ['C','A','T','.','D','O','G'],
-  ['.','.','A','.','.','.','O'],
-  ['F','I','S','H','.','.','G'],
-  ['.','.','R','.','.','.','.'],
-  ['.','.','E','.','.','.','.']
-];
-
-const table = document.getElementById('crossword');
-const inputCells = [];
-
-for(let i=0;i<crosswordData.length;i++){
-  const row = document.createElement('tr');
-  inputCells[i] = [];
-  for(let j=0;j<crosswordData[i].length;j++){
-    const td = document.createElement('td');
-    if(crosswordData[i][j]==='.'){
-      td.style.background='#333';
-      const input = document.createElement('input');
-      input.disabled = true;
-      td.appendChild(input);
-    } else {
-      const input = document.createElement('input');
-      input.maxLength = 1;
-      inputCells[i][j] = input;
-      td.appendChild(input);
-    }
-    row.appendChild(td);
+  if (!media || !link) {
+    alert('Please fill all fields');
+    return;
   }
-  table.appendChild(row);
+
+  const container = document.querySelector('.container');
+  const ad = document.createElement('a');
+  ad.href = link;
+  ad.target = '_blank';
+  ad.style.textDecoration = 'none';
+  ad.style.color = 'inherit';
+
+  let mediaElement = '';
+  if (type === 'image') {
+    mediaElement = `<img src='${media}' style='height:80px;border-radius:8px;object-fit:cover;' />`;
+  } else {
+    mediaElement = `<video src='${media}' autoplay muted loop playsinline style='height:80px;border-radius:8px;'></video>`;
+  }
+
+  ad.innerHTML = `
+    <div class='banner medium'>
+      ${mediaElement}
+      <div class='ad-text'>
+        <h2>Sponsored Ad</h2>
+        <p>Added from admin panel</p>
+      </div>
+      <button class='ad-btn'>Open</button>
+    </div>
+  `;
+
+  container.appendChild(ad);
+
+  document.getElementById('mediaLink').value = '';
+  document.getElementById('redirectLink').value = '';
 }
-
-// ====== CHECK ANSWERS ======
-document.getElementById('checkBtn').addEventListener('click',()=>{
-  let correct = 0;
-  let total = 0;
-  for(let i=0;i<crosswordData.length;i++){
-    for(let j=0;j<crosswordData[i].length;j++){
-      if(crosswordData[i][j]!=='.'){
-        total++;
-        if(inputCells[i][j].value.toUpperCase() === crosswordData[i][j]){
-          inputCells[i][j].style.background='lightgreen';
-          correct++;
-        } else {
-          inputCells[i][j].style.background='pink';
-        }
-      }
-    }
-  }
-  alert(`You got ${correct} out of ${total} correct!`);
-});
-</script>
-
-</body>
-</html>
+</script></body>
+  </html>
