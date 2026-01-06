@@ -34,12 +34,22 @@
       display: flex;
       align-items: center;
       gap: 15px;
+      overflow: hidden;
     }
     .banner.medium {
-      height: 90px;
+      height: 120px;
     }
-    .banner.small {
-      height: 60px;
+    .ad-media {
+      flex-shrink: 0;
+      width: 160px;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 10px;
+    }
+    .ad-media img, .ad-media video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
     .ad-text {
       flex: 1;
@@ -106,9 +116,9 @@ function addAd() {
 
   let mediaElement = '';
   if (type === 'image') {
-    mediaElement = `<img src='${media}' style='height:80px;border-radius:8px;object-fit:cover;' />`;
+    mediaElement = `<div class='ad-media'><img src='${media}' alt='Ad Image'/></div>`;
   } else {
-    mediaElement = `<video src='${media}' autoplay muted loop playsinline style='height:80px;border-radius:8px;'></video>`;
+    mediaElement = `<div class='ad-media'><video src='${media}' autoplay muted loop playsinline></video></div>`;
   }
 
   ad.innerHTML = `
@@ -128,4 +138,4 @@ function addAd() {
   document.getElementById('redirectLink').value = '';
 }
 </script></body>
-  </html>
+</html>
