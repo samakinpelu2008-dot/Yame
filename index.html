@@ -1,28 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TikBoost</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root{
+  --bg:#0b1220;
+  --card:#111827;
+  --primary:#2563eb;
+  --success:#22c55e;
+  --danger:#ef4444;
+  --text:#e5e7eb;
+  --muted:#9ca3af;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+  background:var(--bg);
+  color:var(--text);
+}
+.container{
+  max-width:430px;
+  margin:auto;
+  padding:16px;
+}
+.card{
+  background:var(--card);
+  padding:16px;
+  border-radius:14px;
+  margin-bottom:16px;
+}
+h2,h3,h4{margin:0 0 10px}
+p{color:var(--muted);font-size:14px}
+input,select,button{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:none;
+  margin-top:8px;
+}
+input,select{
+  background:#020617;
+  color:var(--text);
+}
+button{
+  background:var(--primary);
+  color:#fff;
+  font-weight:600;
+}
+button.success{background:var(--success)}
+button.danger{background:var(--danger)}
+button.secondary{background:#334155}
+button:disabled{opacity:.5}
+small{
+  display:block;
+  text-align:center;
+  margin-top:10px;
+  color:var(--muted);
+}
+small span{
+  color:var(--primary);
+  cursor:pointer;
+}
+.hidden{display:none}
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.balance{
+  background:#020617;
+  padding:10px 14px;
+  border-radius:12px;
+  font-weight:700;
+}
+.task{
+  display:flex;
+  gap:8px;
+  margin-top:8px;
+}
+.task button{flex:1}
+ul{padding-left:18px}
+li{margin-bottom:6px;font-size:14px}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<!-- AUTH -->
+<div id="auth" class="card">
+  <h2 id="authTitle">Login</h2>
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <button id="authBtn">Login</button>
+  <small id="toggleText">
+    Don’t have an account? <span id="toggleLink">Sign up</span>
+  </small>
+</div>
+
+<!-- RULES -->
+<div id="rules" class="card hidden">
+  <h3>Rules</h3>
+  <p>
+    • Perform tasks manually<br>
+    • Stay on TikTok for at least 3 seconds<br>
+    • No cheating or spam<br>
+    • Abuse = ban
+  </p>
+  <button id="acceptRules" disabled>Accept (5)</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dash" class="hidden">
+
+  <div class="card header">
+    <div>
+      <strong id="userEmail"></strong>
+      <p>User Dashboard</p>
+    </div>
+    <div class="balance"><span id="pts">0</span> PTS</div>
+  </div>
+
+  <div class="card">
+    <h4>Daily Reward</h4>
+    <button class="success" id="dailyBtn">Claim +5 PTS</button>
+  </div>
+
+  <div class="card">
+    <h4>Tasks</h4>
+    <div class="task">
+      <button id="openLike">Like Video (+1)</button>
+      <button id="confirmLike" disabled>Confirm</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h4>Post Video</h4>
+    <input id="videoLink" placeholder="TikTok video link">
+    <select id="likePlan">
+      <option value="100">100 Likes – 100 PTS</option>
+      <option value="200">200 Likes – 190 PTS</option>
+      <option value="500">500 Likes – 460 PTS</option>
+      <option value="1000">1000 Likes – 900 PTS</option>
+    </select>
+    <button id="postBtn">Submit</button>
+  </div>
+
+  <div class="card">
+    <h4>Buy Points (Manual)</h4>
+    <p>₦10 = 1 PTS<br>Transfer & submit reference</p>
+    <input id="buyAmount" placeholder="PTS amount">
+    <input id="buyRef" placeholder="Payment reference">
+    <button id="payBtn">Submit</button>
+  </div>
+
+  <button class="secondary" id="logoutBtn">Logout</button>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="adminPanel" class="hidden card">
+  <h3>Admin Panel</h3>
+
+  <h4>Users</h4>
+  <ul id="adminUsers"></ul>
+
+  <h4>Payments</h4>
+  <ul id="adminPayments"></ul>
+</div>
+
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, addDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-import {
-  getFirestore,
-  doc,
-  setDoc,
-  getDoc,
-  updateDoc,
-  addDoc,
-  collection,
-  getDocs,
-  query,
-  where,
-  deleteDoc
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
-/* 🔥 FIREBASE CONFIG (YOURS) */
 const firebaseConfig = {
   apiKey: "AIzaSyBEOlLBZvTRxjzxBal9HstvnU2121TXzJg",
   authDomain: "storyverse-2dd65.firebaseapp.com",
@@ -36,227 +192,103 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth();
 const db = getFirestore();
 
+let signup = false;
 let currentUser = null;
-let isSignup = false;
-let activeTask = null;
 
-/* 🔁 AUTH TOGGLE */
-window.toggleAuth = () => {
-  isSignup = !isSignup;
-  document.getElementById("authTitle").innerText = isSignup ? "Sign Up" : "Login";
-  document.getElementById("authBtn").innerText = isSignup ? "Sign Up" : "Login";
-  document.getElementById("toggleText").innerHTML = isSignup
-    ? `Already have an account? <span onclick="toggleAuth()">Login</span>`
-    : `Don’t have an account? <span onclick="toggleAuth()">Sign up</span>`;
+toggleLink.onclick = () => {
+  signup = !signup;
+  authTitle.innerText = signup ? "Sign Up" : "Login";
+  authBtn.innerText = signup ? "Sign Up" : "Login";
+  toggleText.innerHTML = signup
+    ? `Already have an account? <span id="toggleLink">Login</span>`
+    : `Don’t have an account? <span id="toggleLink">Sign up</span>`;
 };
 
-/* 🔐 AUTH HANDLER */
-window.handleAuth = async () => {
-  const email = document.getElementById("email").value;
-  const pass = document.getElementById("password").value;
-
-  if (!email || !pass) return alert("Fill all fields");
-
-  if (isSignup) {
-    const res = await createUserWithEmailAndPassword(auth, email, pass);
+authBtn.onclick = async () => {
+  if (signup) {
+    const res = await createUserWithEmailAndPassword(auth, email.value, password.value);
     await setDoc(doc(db, "users", res.user.uid), {
-      email,
+      email: email.value,
       pts: 0,
-      trust: 100,
-      banned: false,
       role: "user",
-      lastDaily: 0
+      banned: false,
+      lastDaily: ""
     });
   } else {
-    await signInWithEmailAndPassword(auth, email, pass);
+    await signInWithEmailAndPassword(auth, email.value, password.value);
   }
 };
 
-/* 👤 AUTH STATE */
 onAuthStateChanged(auth, async user => {
   if (!user) return;
   currentUser = user;
+  auth.classList.add("hidden");
+  rules.classList.remove("hidden");
 
-  document.getElementById("auth").classList.add("hidden");
-  document.getElementById("rules").classList.remove("hidden");
-
-  let count = 5;
-  const btn = document.getElementById("acceptRules");
-  btn.disabled = true;
-
-  const timer = setInterval(() => {
-    btn.innerText = `Accept (${count})`;
-    count--;
-    if (count < 0) {
-      clearInterval(timer);
-      btn.innerText = "Accept";
-      btn.disabled = false;
+  let c = 5;
+  const t = setInterval(() => {
+    acceptRules.innerText = `Accept (${c})`;
+    c--;
+    if (c < 0) {
+      clearInterval(t);
+      acceptRules.innerText = "Accept";
+      acceptRules.disabled = false;
     }
   }, 1000);
 
-  btn.onclick = () => {
-    document.getElementById("rules").classList.add("hidden");
-    loadDashboard();
+  acceptRules.onclick = async () => {
+    rules.classList.add("hidden");
+    dash.classList.remove("hidden");
+    const snap = await getDoc(doc(db,"users",user.uid));
+    pts.innerText = snap.data().pts;
+    userEmail.innerText = snap.data().email;
+    if (snap.data().role === "admin") adminPanel.classList.remove("hidden");
   };
 });
 
-/* 🧠 LOAD DASHBOARD */
-async function loadDashboard() {
-  const snap = await getDoc(doc(db, "users", currentUser.uid));
-  const data = snap.data();
-
-  if (data.banned) return alert("Account banned");
-
-  document.getElementById("dash").classList.remove("hidden");
-  document.getElementById("userEmail").innerText = data.email;
-  document.getElementById("pts").innerText = data.pts;
-
-  if (data.role === "admin") {
-    document.getElementById("adminPanel").classList.remove("hidden");
-    loadAdmin();
-  }
-}
-
-/* ⏱ TASK SYSTEM */
-window.startLikeTask = () => {
-  activeTask = "like";
-  window.open("https://www.tiktok.com", "_blank");
-  document.getElementById("confirmLike").disabled = true;
-  setTimeout(() => {
-    document.getElementById("confirmLike").disabled = false;
-  }, 3000);
+openLike.onclick = () => {
+  window.open("https://tiktok.com","_blank");
+  confirmLike.disabled = true;
+  setTimeout(()=>confirmLike.disabled=false,3000);
 };
 
-window.confirmLikeTask = async () => {
-  if (!activeTask) return;
-
-  const ref = doc(db, "users", currentUser.uid);
+confirmLike.onclick = async () => {
+  const ref = doc(db,"users",currentUser.uid);
   const snap = await getDoc(ref);
-
-  await updateDoc(ref, { pts: snap.data().pts + 1 });
-  document.getElementById("pts").innerText = snap.data().pts + 1;
-  activeTask = null;
-  document.getElementById("confirmLike").disabled = true;
+  await updateDoc(ref,{pts:snap.data().pts+1});
+  pts.innerText = snap.data().pts+1;
 };
 
-/* 🎁 DAILY REWARD */
-window.dailyReward = async () => {
-  const ref = doc(db, "users", currentUser.uid);
+dailyBtn.onclick = async () => {
+  const ref = doc(db,"users",currentUser.uid);
   const snap = await getDoc(ref);
   const today = new Date().toDateString();
+  if (snap.data().lastDaily === today) return alert("Already claimed");
+  await updateDoc(ref,{pts:snap.data().pts+5,lastDaily:today});
+  pts.innerText = snap.data().pts+5;
+};
 
-  if (snap.data().lastDaily === today) {
-    return alert("Already claimed today");
-  }
-
-  await updateDoc(ref, {
-    pts: snap.data().pts + 5,
-    lastDaily: today
+postBtn.onclick = async () => {
+  await addDoc(collection(db,"posts"),{
+    uid:currentUser.uid,
+    link:videoLink.value,
+    plan:likePlan.value
   });
-
-  document.getElementById("pts").innerText = snap.data().pts + 5;
+  alert("Posted");
 };
 
-/* 📤 POST VIDEO */
-window.postVideo = async () => {
-  const link = document.getElementById("videoLink").value;
-  const plan = Number(document.getElementById("likePlan").value);
-  const cost = plan === 100 ? 100 : plan === 200 ? 190 : plan === 500 ? 460 : 900;
-
-  const ref = doc(db, "users", currentUser.uid);
-  const snap = await getDoc(ref);
-
-  if (snap.data().pts < cost) return alert("Not enough points");
-
-  await updateDoc(ref, { pts: snap.data().pts - cost });
-  document.getElementById("pts").innerText = snap.data().pts - cost;
-
-  await addDoc(collection(db, "posts"), {
-    uid: currentUser.uid,
-    link,
-    target: plan,
-    done: 0,
-    status: "active"
+payBtn.onclick = async () => {
+  await addDoc(collection(db,"payments"),{
+    uid:currentUser.uid,
+    amount:buyAmount.value,
+    ref:buyRef.value,
+    status:"pending"
   });
-
-  alert("Video posted");
+  alert("Submitted");
 };
 
-/* 💰 MANUAL PAYMENT */
-window.submitPayment = async () => {
-  await addDoc(collection(db, "payments"), {
-    uid: currentUser.uid,
-    amount: document.getElementById("buyAmount").value,
-    ref: document.getElementById("buyRef").value,
-    status: "pending"
-  });
-  alert("Payment submitted");
-};
+logoutBtn.onclick = ()=>signOut(auth);
+</script>
 
-/* 🚪 LOGOUT */
-window.logout = () => signOut(auth);
-
-/* ========================= */
-/* ===== ADMIN PANEL ======= */
-/* ========================= */
-
-async function loadAdmin() {
-  loadUsers();
-  loadPayments();
-}
-
-/* 👥 USERS */
-async function loadUsers() {
-  const list = document.getElementById("adminUsers");
-  list.innerHTML = "";
-
-  const snap = await getDocs(collection(db, "users"));
-  snap.forEach(d => {
-    const u = d.data();
-    list.innerHTML += `
-      <li>
-        ${u.email} | ${u.pts} PTS
-        <button onclick="banUser('${d.id}')">Ban</button>
-        <button onclick="addPts('${d.id}')">+PTS</button>
-      </li>`;
-  });
-}
-
-window.banUser = async id => {
-  await updateDoc(doc(db, "users", id), { banned: true });
-  loadUsers();
-};
-
-window.addPts = async id => {
-  const amt = prompt("Add points:");
-  const ref = doc(db, "users", id);
-  const snap = await getDoc(ref);
-  await updateDoc(ref, { pts: snap.data().pts + Number(amt) });
-  loadUsers();
-};
-
-/* 💳 PAYMENTS */
-async function loadPayments() {
-  const list = document.getElementById("adminPayments");
-  list.innerHTML = "";
-
-  const snap = await getDocs(query(collection(db, "payments"), where("status", "==", "pending")));
-  snap.forEach(d => {
-    const p = d.data();
-    list.innerHTML += `
-      <li>
-        ${p.uid} | ${p.amount} PTS
-        <button onclick="approvePay('${d.id}', '${p.uid}', ${p.amount})">Approve</button>
-      </li>`;
-  });
-}
-
-window.approvePay = async (pid, uid, amt) => {
-  await updateDoc(doc(db, "payments", pid), { status: "approved" });
-  const ref = doc(db, "users", uid);
-  const snap = await getDoc(ref);
-  await updateDoc(ref, { pts: snap.data().pts + Number(amt) });
-  loadPayments();
-  loadUsers();
-};
-        </script>
+</body>
+</html>
