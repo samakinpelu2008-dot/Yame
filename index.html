@@ -1,93 +1,250 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Banner Ads Demo with Admin</title>
-  <style>
-    body {margin:0;font-family:Arial,sans-serif;background:#f4f6fa;color:#222;}
-    header {background:linear-gradient(90deg,#0d6efd,#dc3545);color:white;padding:20px;text-align:center;}
-    header h1 {margin:0;font-size:24px;}
-    .container {max-width:1100px;margin:20px auto;padding:0 15px;}
-    .banner {background:white;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.08);margin-bottom:20px;padding:10px;display:flex;align-items:center;gap:15px;overflow:hidden;}
-    .banner.medium {height:120px;}
-    .ad-media {flex-shrink:0;width:160px;height:100%;overflow:hidden;border-radius:10px;}
-    .ad-media img,.ad-media video {width:100%;height:100%;object-fit:cover;}
-    .ad-text {flex:1;}
-    .ad-text h2 {margin:0 0 5px;font-size:18px;color:#0d6efd;}
-    .ad-text p {margin:0;font-size:14px;color:#555;}
-    .ad-btn {background:#dc3545;color:white;border:none;padding:10px 18px;border-radius:20px;font-size:14px;cursor:pointer;}
-    footer {text-align:center;padding:15px;font-size:13px;color:#666;}
-  </style>
+<meta charset="UTF-8">
+<title>TikBoost Full MVP</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#0f172a;color:#fff}
+.container{max-width:900px;margin:auto;padding:20px}
+.card{background:#020617;margin:15px 0;padding:15px;border-radius:10px}
+button{padding:10px 15px;border:none;border-radius:6px;background:#2563eb;color:#fff;font-weight:bold;cursor:pointer}
+button:disabled{background:#334155;cursor:not-allowed}
+input,select{width:100%;padding:10px;margin:6px 0;border-radius:6px;border:none}
+.hidden{display:none}
+.task{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+td,th{padding:8px;border-bottom:1px solid #334155;text-align:left}
+</style>
 </head>
-<body><header>
-  <h1>Banner Ads Demo</h1>
-  <p>Admin panel with ImgBB auto-convert</p>
-</header><div class="container">
-  <!-- ADMIN PANEL -->
-  <div style="background:#fff;padding:15px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.08);margin-bottom:25px;">
-    <h2 style="margin-top:0;color:#0d6efd;">Admin Panel</h2>
-    <p style="font-size:13px;color:#666;">Paste ImgBB share link or direct URL + redirect link</p><select id="adType" style="width:100%;padding:10px;margin-bottom:10px;">
-  <option value="image">Image Ad</option>
-  <option value="video">Video Ad</option>
+<body>
+<div class="container">
+
+<!-- AUTH -->
+<div id="auth" class="card">
+<h2>Login / Register</h2>
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password" type="password">
+<button onclick="login()">Login</button>
+<button onclick="register()">Register</button>
+</div>
+
+<!-- RULES -->
+<div id="rules" class="card hidden">
+<h3>Rules & Guidelines</h3>
+<p>• No cheating<br>• Tasks must be done properly<br>• Abuse = ban</p>
+<button id="acceptBtn" disabled>Accept (5)</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dash" class="hidden">
+
+<div class="card">
+<h3>Dashboard</h3>
+<p>Email: <span id="uemail"></span></p>
+<p>PTS: <span id="pts">0</span></p>
+<button onclick="daily()">Daily Reward +5</button>
+<button onclick="logout()">Logout</button>
+</div>
+
+<!-- TASK -->
+<div class="card">
+<h4>Like Task (+1 PTS)</h4>
+<div class="task">
+<span>Open TikTok Video</span>
+<button onclick="startTask()">Open</button>
+</div>
+<button id="confirm" disabled onclick="confirmTask()">Confirm Done</button>
+</div>
+
+<div class="card">
+<h4>Follow Task (+3 PTS)</h4>
+<div class="task">
+<span>Open TikTok Account</span>
+<button onclick="startFollow()">Open</button>
+</div>
+<button id="confirmFollow" disabled onclick="confirmFollowTask()">Confirm Done</button>
+</div>
+
+<!-- POST VIDEO -->
+<div class="card">
+<h4>Post Video</h4>
+<input id="vlink" placeholder="TikTok Video Link">
+<select id="likes">
+<option value="100">100 Likes (100 PTS)</option>
+<option value="200">200 Likes (190 PTS)</option>
+<option value="500">500 Likes (460 PTS)</option>
+<option value="1000">1000 Likes (900 PTS)</option>
 </select>
-<input id="mediaLink" type="text" placeholder="ImgBB share link or direct URL" style="width:100%;padding:10px;margin-bottom:10px;" />
-<input id="redirectLink" type="text" placeholder="Redirect URL" style="width:100%;padding:10px;margin-bottom:10px;" />
-<button onclick="addAd()" class="ad-btn" style="width:100%;">Add Ad</button>
+<button onclick="postVideo()">Submit</button>
+</div>
 
-  </div>
-</div><footer>© 2026 • Banner Ads Demo</footer><script>
-function convertImgBB(link) {
-  // If it's already a direct link, return as is
-  if (link.includes('i.ibb.co')) return link;
+<!-- MANUAL BUY POINTS -->
+<div class="card">
+<h4>Buy Points (Manual)</h4>
+<p>₦10 = 1 PTS</p>
+<input id="buyPts" placeholder="PTS (e.g. 500)">
+<input id="buyRef" placeholder="Payment Reference">
+<button onclick="submitPayment()">Submit Payment</button>
 
-  // Extract the image ID from share link
-  const match = link.match(/ibb.co\/([a-zA-Z0-9]+)/);
-  if (match) {
-    const id = match[1];
-    // Construct direct link (common pattern)
-    return `https://i.ibb.co/${id}/image.png`;
+<h4>Payment History</h4>
+<ul id="paymentList"></ul>
+</div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, query, where, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+// Firebase config
+const firebaseConfig = {
+  apiKey:"AIzaSyBEOlLBZvTRxjzxBal9HstvnU2121TXzJg",
+  authDomain:"storyverse-2dd65.firebaseapp.com",
+  projectId:"storyverse-2dd65",
+  storageBucket:"storyverse-2dd65.firebasestorage.app",
+  messagingSenderId:"547979964176",
+  appId:"1:547979964176:web:c4b54dce44caee07ab3f95"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth();
+const db = getFirestore();
+
+let user;
+let activeTask = null;
+let activeFollowTask = null;
+
+// Auth & Rules
+onAuthStateChanged(auth, async u => {
+  if(u){
+    user = u;
+    const ref = doc(db,"users",u.uid);
+    const snap = await getDoc(ref);
+    if(!snap.exists()){
+      await setDoc(ref,{email:u.email,pts:0,rules:false,lastReward:"",role:"user"});
+    }
+    if(!snap.data().rules){
+      document.getElementById("rules").classList.remove("hidden");
+      startRules();
+    } else showDash();
   }
-  return link; // fallback
+});
+
+window.register = () => createUserWithEmailAndPassword(auth,email.value,password.value);
+window.login = () => signInWithEmailAndPassword(auth,email.value,password.value);
+window.logout = () => signOut(auth);
+
+function startRules(){
+  let c=5;
+  const btn=document.getElementById("acceptBtn");
+  btn.innerText="Accept ("+c+")";
+  const t=setInterval(()=>{
+    c--;btn.innerText="Accept ("+c+")";
+    if(c===0){btn.disabled=false;btn.innerText="Accept";clearInterval(t);}
+  },1000);
+  btn.onclick=async()=>{
+    await updateDoc(doc(db,"users",user.uid),{rules:true});
+    location.reload();
+  };
 }
 
-function addAd() {
-  let type = document.getElementById('adType').value;
-  let media = document.getElementById('mediaLink').value.trim();
-  let link = document.getElementById('redirectLink').value.trim();
-
-  if (!media || !link) { alert('Please fill all fields'); return; }
-
-  // Auto-convert ImgBB share link to direct image link
-  if (type === 'image') media = convertImgBB(media);
-
-  const container = document.querySelector('.container');
-  const ad = document.createElement('a');
-  ad.href = link;
-  ad.target = '_blank';
-  ad.style.textDecoration = 'none';
-  ad.style.color = 'inherit';
-
-  let mediaElement = '';
-  if (type === 'image') {
-    mediaElement = `<div class='ad-media'><img src='${media}' alt='Ad Image' onerror="this.src='https://via.placeholder.com/160x120.png'"/></div>`;
-  } else {
-    mediaElement = `<div class='ad-media'><video src='${media}' autoplay muted loop playsinline></video></div>`;
-  }
-
-  ad.innerHTML = `
-    <div class='banner medium'>
-      ${mediaElement}
-      <div class='ad-text'>
-        <h2>Sponsored Ad</h2>
-        <p>Added from admin panel</p>
-      </div>
-      <button class='ad-btn'>Open</button>
-    </div>
-  `;
-
-  container.appendChild(ad);
-  document.getElementById('mediaLink').value = '';
-  document.getElementById('redirectLink').value = '';
+async function showDash(){
+  document.getElementById("auth").classList.add("hidden");
+  document.getElementById("rules").classList.add("hidden");
+  document.getElementById("dash").classList.remove("hidden");
+  const snap = await getDoc(doc(db,"users",user.uid));
+  document.getElementById("uemail").innerText = user.email;
+  document.getElementById("pts").innerText = snap.data().pts;
 }
-</script></body>
+
+// Daily Reward
+window.daily = async () => {
+  const ref = doc(db,"users",user.uid);
+  const snap = await getDoc(ref);
+  const today = new Date().toDateString();
+  if(snap.data().lastReward===today) return alert("Already claimed today");
+  await updateDoc(ref,{pts:snap.data().pts+5,lastReward:today});
+  document.getElementById("pts").innerText = snap.data().pts+5;
+}
+
+// Tasks
+window.startTask = async () => {
+  activeTask = "LIKE_GLOBAL";
+  const q = query(collection(db,"task_completions"),where("userId","==",user.uid),where("taskId","==",activeTask));
+  const snap = await getDocs(q);
+  if(!snap.empty){alert("Task already done"); return;}
+  window.open("https://www.tiktok.com","_blank");
+  confirm.disabled = true;
+  setTimeout(()=>confirm.disabled=false,3000);
+}
+
+window.confirmTask = async () => {
+  if(!activeTask) return;
+  await addDoc(collection(db,"task_completions"),{userId:user.uid,taskId:activeTask,type:"like",date:new Date().toDateString()});
+  const ref = doc(db,"users",user.uid);
+  const snap = await getDoc(ref);
+  await updateDoc(ref,{pts:snap.data().pts+1});
+  document.getElementById("pts").innerText = snap.data().pts+1;
+  confirm.disabled=true;
+  activeTask = null;
+}
+
+window.startFollow = async () => {
+  activeFollowTask = "FOLLOW_GLOBAL";
+  const q = query(collection(db,"task_completions"),where("userId","==",user.uid),where("taskId","==",activeFollowTask));
+  const snap = await getDocs(q);
+  if(!snap.empty){alert("Task already done"); return;}
+  window.open("https://www.tiktok.com","_blank");
+  confirmFollow.disabled = true;
+  setTimeout(()=>confirmFollow.disabled=false,3000);
+}
+
+window.confirmFollowTask = async () => {
+  if(!activeFollowTask) return;
+  await addDoc(collection(db,"task_completions"),{userId:user.uid,taskId:activeFollowTask,type:"follow",date:new Date().toDateString()});
+  const ref = doc(db,"users",user.uid);
+  const snap = await getDoc(ref);
+  await updateDoc(ref,{pts:snap.data().pts+3});
+  document.getElementById("pts").innerText = snap.data().pts+3;
+  confirmFollow.disabled = true;
+  activeFollowTask = null;
+}
+
+// Post Video
+window.postVideo = async () => {
+  const costMap={100:100,200:190,500:460,1000:900};
+  const cost=costMap[likes.value];
+  const ref = doc(db,"users",user.uid);
+  const snap = await getDoc(ref);
+  if(snap.data().pts<cost){alert("Not enough PTS"); return;}
+  await updateDoc(ref,{pts:snap.data().pts-cost});
+  document.getElementById("pts").innerText = snap.data().pts-cost;
+  alert("Video submitted");
+}
+
+// Manual Buy Points
+window.submitPayment = async () => {
+  const pts = parseInt(buyPts.value);
+  const refText = buyRef.value.trim();
+  if(!pts || !refText) return alert("Fill all fields");
+  await addDoc(collection(db,"payments"),{userId:user.uid,email:user.email,pts:pts,amount:pts*10,reference:refText,status:"pending",date:new Date().toISOString()});
+  buyPts.value=""; buyRef.value="";
+  alert("Payment submitted. Await admin approval.");
+}
+
+// Payment History
+onSnapshot(query(collection(db,"payments"),where("userId","==",user.uid)),snap=>{
+  const ul = document.getElementById("paymentList");
+  ul.innerHTML="";
+  snap.forEach(d=>{
+    const p=d.data();
+    const li=document.createElement("li");
+    li.innerText=`${p.pts} PTS | ₦${p.amount} | ${p.status}`;
+    ul.appendChild(li);
+  });
+});
+</script>
+</body>
 </html>
