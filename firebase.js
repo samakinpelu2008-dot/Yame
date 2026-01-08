@@ -3,16 +3,17 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebas
 import { getAuth } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// Replace this config with your Firebase project's config
+// YOUR PROJECT CONFIG
 const firebaseConfig = {
-  apiKey: "AIzaSyBEOlLBZvTRxjzxBal9HstvnU2121TXzJg",
-  authDomain: "storyverse-2dd65.firebaseapp.com",
-  projectId: "storyverse-2dd65",
-  storageBucket: "storyverse-2dd65.appspot.com",
-  messagingSenderId: "547979964176",
-  appId: "1:547979964176:web:c4b54dce44caee07ab3f95"
+  apiKey: "AIzaSyDeFlOeRoiNjqH9LAclnqnehXNY6scPqzE",
+  authDomain: "businessio-37c69.firebaseapp.com",
+  projectId: "businessio-37c69",
+  storageBucket: "businessio-37c69.appspot.com",
+  messagingSenderId: "287926988132",
+  appId: "1:287926988132:web:39c6aaf2f8994406e75e71"
 };
 
+// Initialize Firebase
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
